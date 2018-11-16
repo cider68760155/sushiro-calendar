@@ -1,11 +1,10 @@
-import {CLIENT_ID} from '/passwords.js';
-import {API_KEY} from '/passwords.js';
 handleClientLoad();
 
 var btn = $('<input type="button" value="カレンダーに追加">');
 btn.appendTo($('input[name="btn_after"]').parent());
 btn.click(det_add);
 var authorizeButton = $('<button id="authorize_button" style="display: none;">Authorize</button>').click(handleAuthClick)
+    .appendTo($('input[name="btn_after"]').parent());
 var signoutButton = $('<button id="signout_button" style="display: none;">Sign Out</button>')
     .appendTo($('input[name="btn_after"]').parent());
 
@@ -26,6 +25,7 @@ function handleClientLoad() {
 function initClient() {
     gapi.client.init({
         apiKey: API_KEY,
+        clientId: CLIENT_ID,
         discoveryDocs: DISCOVERY_DOCS,
         scope: SCOPES
     }).then(function () {
@@ -46,10 +46,12 @@ function initClient() {
 function updateSigninStatus(isSignedIn) {
     if (isSignedIn) {
         authorizeButton.hide();
-        signoutButton.show();
+        signoutButton.hide();
+        btn.show();
     } else {
         authorizeButton.show();
         signoutButton.hide();
+        btn.hide();
     }
 }
 
@@ -68,11 +70,21 @@ function handleSignoutClick(event) {
 }
 
 function det_add() {
+    /*格納形式
+    event:google calendar APIに投げつけるjsonのひな型。
+    year=[月曜日の年,日曜日の年];ほとんど一緒やけど、年末だけ違う。
+    year_sel:基本0。年越ししたら1になる。
+    day=[m,d];
+    start_time=hhmm;０パディングはされていない。
+    end_time:start_timeに同じ。
+    start:start_timeをDate型に変換したもの。
+    end:startに同じ。
+    */
     var event = {
         'summary': 'バイト',
         'description': 'Made by userscript',
-        "reminders": {
-            "useDefault": false
+        'reminders': {
+            'useDefault': false
         },
         'start': {
             'dateTime': '',
@@ -81,35 +93,40 @@ function det_add() {
             'dateTime': '',
         }
     };
-    //始まりと終わりの年が配列に格納されている
+
+    //取得
     var year = $('.clr').text().match(/[0-9]{4}/g);
-    year[0] = year[0].replace(/\s/g, '');
-    year[1] = year[1].replace(/\s/g, '');
-    //yearのうちどちらを使うかを選ぶセレクタ
-    var year_sel = 0;
     $.each($('.def:eq(5) tr'), function (i, val) {
+        //一行目は読み飛ばす
         if (i == 0) return true;
+        //バイトが無い日は読み飛ばす
         if (/\s/g.test($(val).children('td:eq(1)').text())) return true;
+        var year_sel = 0;
         var day = $(val).children('th:eq(0)').text();
         var start_time = $(val).children('td:eq(0)').text();
         var end_time = $(val).children('td:eq(1)').text();
 
-
+        //整形
+        year[0] = year[0].replace(/\s/g, '');
+        year[1] = year[1].replace(/\s/g, '');
         day = day.replace(/\s/g, '');
         day = day.split("/");
         start_time = hm(start_time.replace(/\s/g, ''));
         end_time = hm(end_time.replace(/\s/g, ''));
-
         if (year[0] != year[1]) {
             //年越し時期の処理
             if (/1\//.test(day)) year_sel = 1;
         }
         var start = new Date(year[year_sel], day[0] - 1, day[1], start_time[0], start_time[1]);
         var end = new Date(year[year_sel], day[0] - 1, day[1], end_time[0], end_time[1]);
+        
+        //追加
         event.start.dateTime = start.toISOString();
         event.end.dateTime = end.toISOString();
+        console.log(event);
         add_event(event);
     });
+    alert("追加が完了しました！");
 }
 
 function add_event(event) {
@@ -118,7 +135,6 @@ function add_event(event) {
         'resource': event
     });
     request.execute();
-
 }
 
 function hm(time) {
