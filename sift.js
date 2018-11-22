@@ -1,12 +1,13 @@
 handleClientLoad();
 
-var btn = $('<input type="button" value="カレンダーに追加">');
+var btn = $('<input type="button" value="カレンダーに追加" style="display: none;">');
 btn.appendTo($('input[name="btn_after"]').parent());
-btn.click(det_add);
+btn.click(update_event);
 var authorizeButton = $('<button id="authorize_button" style="display: none;">Authorize</button>').click(handleAuthClick)
     .appendTo($('input[name="btn_after"]').parent());
 var signoutButton = $('<button id="signout_button" style="display: none;">Sign Out</button>')
     .appendTo($('input[name="btn_after"]').parent());
+$('<pre id="content"></pre>').appendTo($('input[name="btn_after"]').parent());
 
 var SCOPES = "https://www.googleapis.com/auth/calendar";
 var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest"];
@@ -46,7 +47,7 @@ function initClient() {
 function updateSigninStatus(isSignedIn) {
     if (isSignedIn) {
         authorizeButton.hide();
-        signoutButton.hide();
+        signoutButton.show();
         btn.show();
     } else {
         authorizeButton.show();
@@ -69,6 +70,16 @@ function handleSignoutClick(event) {
     gapi.auth2.getAuthInstance().signOut();
 }
 
+function update_event(){
+    delete_existing();
+    var events=det_add();
+    console.log(events);
+    events.forEach(function(event){
+        add_event(event);
+    });
+    alert("追加が完了しました！");
+}
+
 function det_add() {
     /*格納形式
     event:google calendar APIに投げつけるjsonのひな型。
@@ -80,23 +91,24 @@ function det_add() {
     start:start_timeをDate型に変換したもの。
     end:startに同じ。
     */
-    var event = {
-        'summary': 'バイト',
-        'description': 'Made by userscript',
-        'reminders': {
-            'useDefault': false
-        },
-        'start': {
-            'dateTime': '',
-        },
-        'end': {
-            'dateTime': '',
-        }
-    };
+    var events=[];
 
     //取得
     var year = $('.clr').text().match(/[0-9]{4}/g);
     $.each($('.def:eq(5) tr'), function (i, val) {
+        var event = {
+            'summary': 'バイト',
+            'description': 'Made by userscript',
+            'reminders': {
+                'useDefault': false
+            },
+            'start': {
+                'dateTime': '',
+            },
+            'end': {
+                'dateTime': '',
+            }
+        };
         //一行目は読み飛ばす
         if (i == 0) return true;
         //バイトが無い日は読み飛ばす
@@ -119,14 +131,13 @@ function det_add() {
         }
         var start = new Date(year[year_sel], day[0] - 1, day[1], start_time[0], start_time[1]);
         var end = new Date(year[year_sel], day[0] - 1, day[1], end_time[0], end_time[1]);
-        
+
         //追加
         event.start.dateTime = start.toISOString();
         event.end.dateTime = end.toISOString();
-        console.log(event);
-        add_event(event);
+        events.push(event);
     });
-    alert("追加が完了しました！");
+    return events;
 }
 
 function add_event(event) {
@@ -139,4 +150,62 @@ function add_event(event) {
 
 function hm(time) {
     return time.length == 4 ? [time.substr(0, 2), time.substr(2, 2)] : [time.substr(0, 1), time.substr(1, 2)];
+}
+
+function listUpcomingEvents() {
+    gapi.client.calendar.events.list({
+        'calendarId': 'primary',
+        'timeMin': (new Date()).toISOString(),
+        'showDeleted': false,
+        'singleEvents': true,
+        'maxResults': 10,
+        'orderBy': 'startTime'
+    }).then(function (response) {
+        var events = response.result.items;
+        appendPre('Upcoming events:');
+
+        if (events.length > 0) {
+            for (i = 0; i < events.length; i++) {
+                var event = events[i];
+                var when = event.start.dateTime;
+                if (!when) {
+                    when = event.start.date;
+                }
+                appendPre(event.summary + ' (' + when + ')')
+            }
+        } else {
+            appendPre('No upcoming events found.');
+        }
+    });
+}
+
+function appendPre(message) {
+    var pre = document.getElementById('content');
+    var textContent = document.createTextNode(message + '\n');
+    pre.appendChild(textContent);
+}
+
+function delete_existing() {
+    var events_list = {
+        'calendarId': 'primary',
+        'timeMin': '',
+        'timeMax': '',
+        'showDeleted': false,
+        'singleEvents': true,
+        'maxResults': 10,
+        'q': 'userscript',
+        'orderBy': 'startTime'
+    }
+    var range = $('.clr').text().match(/[0-9]+/g);
+    var sday = new Date(range[0], range[1] - 1, range[2], 0, 0);
+    var eday = new Date(range[3], range[4] - 1, range[5], 23, 59);
+    events_list.timeMin = sday.toISOString();
+    events_list.timeMax = eday.toISOString();
+    gapi.client.calendar.events.list(events_list).then(function (response) {
+        response.result.items.forEach(function (event) {
+            gapi.client.calendar.events.delete({ 'calendarId': 'primary', 'eventId': event.id }).then(function(response){
+                console.log(response);
+            });
+        });
+    });
 }

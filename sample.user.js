@@ -6,7 +6,7 @@
 // @require      https://apis.google.com/js/api.js
 // @require      sift.jsへのパス
 // @require      passwords.jsへのパス
-// @match        スシローカレンダーのURL
+// @match        スシローカレンダーのURL（ap.sushio.jp）
 // @grant        none
 // ==/UserScript==
 
