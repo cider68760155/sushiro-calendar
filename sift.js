@@ -33,8 +33,9 @@ function initClient() {
         // Listen for sign-in state changes.
         gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
-        // Handle the initial sign-in state.
-        updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+        // Handle the initial sign-in state.公式版はここのコメントアウト外す
+        //updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+        btn.show();
         authorizeButton.onclick = handleAuthClick;
         signoutButton.onclick = handleSignoutClick;
     });
@@ -74,8 +75,8 @@ function update_event(){
     delete_existing();
     var events=det_add();
     console.log(events);
-    events.forEach(function(event){
-        add_event(event);
+    events.forEach(function(event,index){
+        setTimeout(add_event(event),1000*index);
     });
     alert("追加が完了しました！");
 }
@@ -135,6 +136,7 @@ function det_add() {
         //追加
         event.start.dateTime = start.toISOString();
         event.end.dateTime = end.toISOString();
+        console.log(end);
         events.push(event);
     });
     return events;
@@ -145,7 +147,9 @@ function add_event(event) {
         'calendarId': 'primary',
         'resource': event
     });
-    request.execute();
+    request.execute().then(function(response){
+        console.log(response);
+    });
 }
 
 function hm(time) {

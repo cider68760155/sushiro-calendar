@@ -4,8 +4,8 @@
 // @version      0.1
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js
 // @require      https://apis.google.com/js/api.js
-// @require      sift.jsへのパス
-// @require      passwords.jsへのパス
+// @require      sift.jsへのパス(file:// 形式)
+// @require      passwords.jsへのパス(file:// 形式)
 // @match        スシローカレンダーのURL（ap.sushio.jp）
 // @grant        none
 // ==/UserScript==
