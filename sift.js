@@ -75,7 +75,7 @@ function update_event(){
     var events=det_add();
     console.log(events);
     events.forEach(function(event,index){
-        setTimeout(add_event(event),1000*index);
+        setTimeout(add_event(event),2000*index);
     });
     alert("追加が完了しました！");
 }
@@ -127,7 +127,7 @@ function det_add() {
         end_time = hm(end_time.replace(/\s/g, ''));
         if (year[0] != year[1]) {
             //年越し時期の処理
-            if (/1\//.test(day)) year_sel = 1;
+            if (day[0]=="1") year_sel = 1;
         }
         var start = new Date(year[year_sel], day[0] - 1, day[1], start_time[0], start_time[1]);
         var end = new Date(year[year_sel], day[0] - 1, day[1], end_time[0], end_time[1]);
