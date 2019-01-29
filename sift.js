@@ -33,6 +33,7 @@ function initClient() {
         // Listen for sign-in state changes.
         gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
+        // Handle the initial sign-in state.
         updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
         btn.show();
         authorizeButton.onclick = handleAuthClick;
@@ -117,7 +118,7 @@ function det_add() {
         var day = $(val).children('th:eq(0)').text();
         var start_time = $(val).children('td:eq(0)').text();
         var end_time = $(val).children('td:eq(1)').text();
-
+        if(start_time=="未作成")return true;
         //整形
         year[0] = year[0].replace(/\s/g, '');
         year[1] = year[1].replace(/\s/g, '');
@@ -135,7 +136,6 @@ function det_add() {
         //追加
         event.start.dateTime = start.toISOString();
         event.end.dateTime = end.toISOString();
-        console.log(end);
         events.push(event);
     });
     return events;
@@ -146,9 +146,7 @@ function add_event(event) {
         'calendarId': 'primary',
         'resource': event
     });
-    request.execute().then(function(response){
-        console.log(response);
-    });
+    request.execute();
 }
 
 function hm(time) {
