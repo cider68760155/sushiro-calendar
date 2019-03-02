@@ -19,3 +19,5 @@ Google Calendarを使用しているので予定の共有や使っているカ�
 - なんの変哲もないただのPython Scriptです。お好みの環境でお使いくださいw
 - urls.pyの書き換えと、API登録からのtoken.jsonだけお願いします。
 - おすすめの使い方は、スマホのアプリに導入 or exe化してスタートアップに登録です。
+- exe化して使う場合は、sift.pyのあるディレクトリではなく、sift.exeのあるディレクトリに
+token.jsonとcredentials.jsonを置いてください
